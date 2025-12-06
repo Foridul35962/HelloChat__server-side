@@ -8,6 +8,8 @@ import ApiResponse from '../utils/ApiResponse.js'
 import { generateVerificationMail } from '../nodeMailer/verificationEmail.js'
 import { generateAccessToken, generateRefreshToken } from '../utils/token.js'
 import jwt from 'jsonwebtoken'
+import { uploadToCloudinary } from '../utils/uploadToCloudinary.js'
+import cloudinary from '../cloudinary/config.js'
 
 export const registration = [
     check('fullName')
@@ -203,4 +205,36 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
             'Access token refreshed successfully'
         )
     )
+})
+
+export const updateProfile = asyncHandler(async (req, res) => {
+    const userId = req.user._id
+    const user = await Users.findById(userId).select("-password -refreshToken")
+    if (!user) {
+        throw new ApiError(404, 'user not found')
+    }
+
+    try {
+        const image = req.files?.[0]
+        if (!image) {
+            throw new ApiError(400, 'image is required')
+        }
+        const uploaded = await uploadToCloudinary(image.buffer, "hello-chat")
+        if (user.profilePic.publicId) {
+            await cloudinary.uploader.destroy(user.profilePic.publicId)
+        }
+        
+        user.profilePic.url = uploaded.secure_url
+        user.profilePic.publicId = uploaded.public_id
+    } catch (error) {
+        throw new ApiError(500, 'image upload failed')
+    }
+
+    await user.save()
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, 'profile update successfully')
+        )
 })

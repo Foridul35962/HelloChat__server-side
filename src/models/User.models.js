@@ -2,27 +2,32 @@ import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
 const userSchema = new mongoose.Schema({
-    fullName:{
+    fullName: {
         type: String,
         required: true
     },
-    email:{
+    email: {
         type: String,
         required: true,
         unique: true
     },
-    password:{
+    password: {
         type: String,
         required: true
     },
-    profilePic:{
-        type: String,
-        default: ""
+    profilePic: {
+        url: {
+            type: String,
+            default: ""
+        },
+        publicId:{
+            type: String
+        }
     },
-    refreshToken:{
+    refreshToken: {
         type: String
     }
-},{timestamps: true})
+}, { timestamps: true })
 
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
