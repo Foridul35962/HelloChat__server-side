@@ -6,6 +6,7 @@ import Temp from '../models/Temp.models.js'
 import transport from '../nodeMailer/config.js'
 import ApiResponse from '../utils/ApiResponse.js'
 import { generateVerificationMail } from '../nodeMailer/verificationEmail.js'
+import { generateAccessToken, generateRefreshToken } from '../utils/token.js'
 
 export const registration = [
     check('fullName')
@@ -51,7 +52,7 @@ export const registration = [
             await transport.sendMail(mailOption)
         } catch (error) {
             console.log(error);
-            
+
             throw new ApiError(500, 'otp send failed')
         }
 
@@ -100,5 +101,47 @@ export const verifyRegistration = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, user, 'user registration successfully')
+        )
+})
+
+export const login = asyncHandler(async (req, res) => {
+    const { email, password } = req.body
+    if (!email || !password) {
+        throw new ApiError(400, 'all field are required')
+    }
+
+    const user = await Users.findOne({ email })
+    if (!user) {
+        throw new ApiError(404, 'user is not found')
+    }
+
+    const isPassMatched = await user.isPasswordCorrect(password)
+    if (!isPassMatched) {
+        throw new ApiError(400, 'password is not matched')
+    }
+
+    const refreshToken = generateRefreshToken(user)
+    const accessToken = generateAccessToken(user)
+
+    user.refreshToken = refreshToken
+    await user.save()
+
+    user.refreshToken = undefined
+    user.password = undefined
+
+    const tokenOption = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 10 * 24 * 60 * 60 * 1000,
+    }
+
+    return res
+        .status(200)
+        .cookie(
+            'refreshToken', refreshToken, tokenOption
+        )
+        .json(
+            new ApiResponse(200, {user, accessToken}, 'user logged in successfully')
         )
 })
