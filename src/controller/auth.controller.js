@@ -7,6 +7,7 @@ import transport from '../nodeMailer/config.js'
 import ApiResponse from '../utils/ApiResponse.js'
 import { generateVerificationMail } from '../nodeMailer/verificationEmail.js'
 import { generateAccessToken, generateRefreshToken } from '../utils/token.js'
+import jwt from 'jsonwebtoken'
 
 export const registration = [
     check('fullName')
@@ -142,6 +143,64 @@ export const login = asyncHandler(async (req, res) => {
             'refreshToken', refreshToken, tokenOption
         )
         .json(
-            new ApiResponse(200, {user, accessToken}, 'user logged in successfully')
+            new ApiResponse(200, { user, accessToken }, 'user logged in successfully')
         )
+})
+
+export const logout = asyncHandler(async (req, res) => {
+    const userId = req.user?._id
+    if (!userId) {
+        throw new ApiError(400, 'userId is required')
+    }
+
+    await Users.findByIdAndUpdate(userId, {
+        refreshToken: ""
+    })
+
+    const tokenOption = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    }
+
+    return res
+        .status(200)
+        .clearCookie('refreshToken', tokenOption)
+        .json(
+            new ApiResponse(200, {}, 'logged out successfully')
+        )
+})
+
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+    const refreshToken = req.cookies.refreshToken
+
+    if (!refreshToken) {
+        throw new ApiError(401, 'Refresh token missing')
+    }
+
+    let decoded
+    try {
+        decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+    } catch (error) {
+        throw new ApiError(403, 'Invalid or expired refresh token')
+    }
+
+    const user = await Users.findOne({
+        _id: decoded._id,
+        refreshToken: refreshToken
+    })
+
+    if (!user) {
+        throw new ApiError(403, 'Invalid refresh token')
+    }
+
+    const newAccessToken = generateAccessToken(user)
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { accessToken: newAccessToken },
+            'Access token refreshed successfully'
+        )
+    )
 })
