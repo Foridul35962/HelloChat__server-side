@@ -1,10 +1,10 @@
-class ApiError extends Error {
-    constructor(statusCode, message = 'something is wrong', errors = []) {
+class ApiErrors extends Error{
+    constructor(statusCode, message = 'somthing is wrong', error = []){
         super(message)
-        this.status = statusCode
-        this.errors = errors
+        this.statusCode = statusCode,
+        this.error = error,
         this.success = false
     }
 }
 
-export default ApiError
+export default ApiErrors
