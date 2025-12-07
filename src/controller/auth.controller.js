@@ -238,3 +238,21 @@ export const updateProfile = asyncHandler(async (req, res) => {
             new ApiResponse(200, user, 'profile update successfully')
         )
 })
+
+export const getUser = asyncHandler(async(req, res)=>{
+    const userId = req.user?._id
+    if (!userId) {
+        throw new ApiError(400, 'user id is not found')
+    }
+
+    const user = await Users.findById(userId).select("-password -refreshToken")
+    if (!user) {
+        throw new ApiError(404, 'user not found')
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, 'user fetched successfully')
+        )
+})
