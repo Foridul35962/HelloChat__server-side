@@ -5,6 +5,7 @@ import cors from 'cors'
 //local module
 import errorHandler from './utils/errorHandler.js'
 import authRouter from './routers/auth.routes.js'
+import messageRouter from './routers/message.routes.js'
 
 const app = express()
 
@@ -20,6 +21,7 @@ app.use(express.json())
 
 //routers
 app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/message', messageRouter)
 
 //server working check
 app.get('/', (req, res) => {
