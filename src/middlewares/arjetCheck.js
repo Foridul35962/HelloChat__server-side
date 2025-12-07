@@ -34,7 +34,6 @@ const arcjetProtection = asyncHandler(async (req, res, next) => {
 
         next();
     } catch (error) {
-        console.log("Arcjet protection error:", error);
         next(error);
     }
 });
