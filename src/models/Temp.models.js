@@ -29,7 +29,7 @@ const tempSchema = new mongoose.Schema({
     createdAt:{
         type: Date,
         default: Date.now,
-        expires: 6000
+        expires: 600
     }
 }, {timestamps: true})
 
