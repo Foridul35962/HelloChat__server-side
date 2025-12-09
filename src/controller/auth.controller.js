@@ -196,7 +196,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     const user = await Users.findOne({
-        _id: decoded._id,
+        _id: decoded.userId,
         refreshToken: refreshToken
     })
 
