@@ -176,7 +176,15 @@ export const logout = asyncHandler(async (req, res) => {
 export const refreshAccessToken = asyncHandler(async (req, res) => {
     const refreshToken = req.cookies.refreshToken
 
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/'
+    }
+
     if (!refreshToken) {
+        res.clearCookie('refreshToken', cookieOptions)
         throw new ApiError(401, 'Refresh token missing')
     }
 
@@ -193,6 +201,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     })
 
     if (!user) {
+        res.clearCookie('refreshToken', cookieOptions)
         throw new ApiError(403, 'Invalid refresh token')
     }
 
