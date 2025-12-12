@@ -65,7 +65,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
         throw new ApiErrors(400, 'Receiver id is required')
     }
 
-    if (senderId === receiverId) {
+    if (String(senderId) === String(receiverId)) {
         throw new ApiErrors(400, 'can not send message to yourself')
     }
 
