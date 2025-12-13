@@ -1,3 +1,4 @@
+import { getReceiverSocketId, io } from "../app.js";
 import Message from "../models/Message.models.js";
 import Users from "../models/User.models.js";
 import ApiErrors from "../utils/ApiError.js";
@@ -95,6 +96,12 @@ export const sendMessage = asyncHandler(async (req, res) => {
     })
 
     await newMessage.save()
+
+    //todo: send message in real-time if user is online - socket.io
+    const receiverSocketId = getReceiverSocketId(receiverId)
+    if (receiverSocketId && receiverSocketId.size > 0) {
+        io.to([...receiverSocketId]).emit('newMessage', newMessage)
+    }
 
     return res.status(201).json(
         new ApiResponse(201, newMessage, 'New message added successfully')
